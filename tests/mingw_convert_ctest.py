@@ -22,61 +22,70 @@
 # Note that under 'cmake', Windows(TM) paths use / instead of \ as a 
 # folder separator.
 
-# mingw_cross_info.py is created by scripts/release-common.sh during build 
-# of the regression test package. it contains info regarding paths in
-# CTestTestfiles.cmake that we need to modify
+import os
 import mingw_cross_info
-import sys,os,string,re
+import re
+import sys
 from winreg import *
 
-_debug=False
-_undo=False
-if '--debug' in sys.argv: _debug=True
-if '--undo' in sys.argv: _undo=True
+# mingw_cross_info.py is created by scripts/release-common.sh during build
+# of the regression test package. it contains info regarding paths in
+# CTestTestfiles.cmake that we need to modify
 
-def debug(*args):
+_debug = False
+_undo = False
+if '--debug' in sys.argv:
+    _debug = True
+if '--undo' in sys.argv:
+    _undo = True
+
+
+def debug(*args) -> None:
     global _debug
     if _debug:
         print('mingw_x_testfile:', end=" ")
-        for arg in args: print(arg, end=" ")
+        for arg in args:
+            print(arg, end=" ")
         print()
 
-thisfile_abspath=os.path.abspath(__file__)
 
-linbase=mingw_cross_info.linux_abs_basedir
-winbase=os.path.dirname(os.path.dirname(thisfile_abspath))
+thisfile_abspath = os.path.abspath(__file__)
 
-linbuild=mingw_cross_info.linux_abs_builddir
-winbuild=winbase
+linbase = mingw_cross_info.linux_abs_basedir
+winbase = os.path.dirname(os.path.dirname(thisfile_abspath))
 
-lintct=linbase+'/tests/test_cmdline_tool.py'
-wintct=winbase+'/tests/test_cmdline_tool.py'
+linbuild = mingw_cross_info.linux_abs_builddir
+winbuild = winbase
 
-linpy=mingw_cross_info.linux_python #'/usr/bin/python3'
-winpy=sys.executable
+lintct = linbase + '/tests/test_cmdline_tool.py'
+wintct = winbase + '/tests/test_cmdline_tool.py'
+
+linpy = mingw_cross_info.linux_python  # '/usr/bin/python3'
+winpy = sys.executable
 
 executable = "openscad.com"
-linosng=linbuild + '/' + executable
-winosng=winbuild + '\\' + executable
+linosng = linbuild + '/' + executable
+winosng = winbuild + '\\' + executable
 
-linconv=mingw_cross_info.linux_convert #'/usr/bin/convert'
+linconv = mingw_cross_info.linux_convert  # '/usr/bin/convert'
 
-linoslib='OPENSCADPATH='+linbase+'/libraries'
-winoslib='OPENSCADPATH='+winbase+'/libraries'
+linoslib = 'OPENSCADPATH=' + linbase + '/libraries'
+winoslib = 'OPENSCADPATH=' + winbase + '/libraries'
 
-lintestdeploy=linbuild+'/tests'
-wintestdeploy=winbuild+'/tests-build'
+lintestdeploy = linbuild + '/tests'
+wintestdeploy = winbuild + '/tests-build'
 
-lintestdata=linbase+'/tests/data'
-wintestdata=winbase+'/tests/data'
+lintestdata = linbase + '/tests/data'
+wintestdata = winbase + '/tests/data'
 
-linexamples=linbase+'/examples'
-winexamples=winbase+'/examples'
+linexamples = linbase + '/examples'
+winexamples = winbase + '/examples'
 
-def find_imagemagick():
+
+def find_imagemagick() -> str:
     # Find imagemagick's convert.exe
-    imbase=''
-    winconv=''
+    imbase = ''
+    winconv = ''
     try:
         regkey = OpenKey(HKEY_LOCAL_MACHINE, r'SOFTWARE\ImageMagick\Current')
         imbase = QueryValueEx(regkey, 'BinPath')[0]
@@ -96,26 +105,29 @@ def find_imagemagick():
             imbase = QueryValueEx(regkey, 'BinPath')[0]
             print('Found ImageMagick path: ' + imbase)
         except Exception as e:
-            print("Can't find imagemagick using registry... " + str(type(e))+str(e) )
+            print("Can't find imagemagick using registry... " + str(type(e)) + str(e))
             pass
 
     if imbase != '':
         winconv = find_imagemagick_bin(imbase)
-        if winconv != '': return winconv 
+        if winconv != '':
+            return winconv
 
     if winconv == '':
         print('Searching for ImageMagick in Program folders')
-        for basedir in 'C:/Program Files','C:/Program Files (x86)':
+        for basedir in 'C:/Program Files', 'C:/Program Files (x86)':
             if os.path.isdir(basedir):
-                pflist=os.listdir(basedir)
+                pflist = os.listdir(basedir)
                 for subdir in pflist:
                     if 'ImageMagick' in subdir:
                         imbase = basedir + '/' + subdir
                         winconv = find_imagemagick_bin(imbase)
-                        if winconv != '': return winconv
+                        if winconv != '':
+                            return winconv
     return ''
 
-def find_imagemagick_bin(path):
+
+def find_imagemagick_bin(path: str) -> str:
     if os.path.isfile(path + '/convert.exe'):
         return path + '/convert.exe'
     elif os.path.isfile(path + '/magick.exe'):
@@ -123,54 +135,55 @@ def find_imagemagick_bin(path):
     else:
         return ''
 
+
 def processfile(infilename, winconv):
-    backup_filename = infilename+'.backup'
+    backup_filename = infilename + '.backup'
     # Don't backup with modified file if run twice
     if os.path.isfile(backup_filename):
-        open(infilename,'wb').write(open(backup_filename,'rb').read())
+        open(infilename, 'wb').write(open(backup_filename, 'rb').read())
     else:
-        open(backup_filename,'wb').write(open(infilename,'rb').read())
+        open(backup_filename, 'wb').write(open(infilename, 'rb').read())
     if _undo:
         return
-    
-    debug ('wrote backup of ',infilename,' to ',backup_filename)
 
-    outfilename = infilename.replace('.cmake','.win.cmake')
-    fin=open(infilename)
-    lines=fin.readlines()
-    fout=open(outfilename,'w')
-    fout.write('#'+os.linesep)
-    fout.write('# modified by mingw_convert_ctest.py'+os.linesep)
-    fout.write('#'+os.linesep)
+    debug('wrote backup of ', infilename, ' to ', backup_filename)
 
-    debug('inputname',infilename)
-    debug('outputname',outfilename)
+    outfilename = infilename.replace('.cmake', '.win.cmake')
+    fin = open(infilename)
+    lines = fin.readlines()
+    fout = open(outfilename, 'w')
+    fout.write('#' + os.linesep)
+    fout.write('# modified by mingw_convert_ctest.py' + os.linesep)
+    fout.write('#' + os.linesep)
 
-    winbase2 = winbase.replace('\\','/')
+    debug('inputname', infilename)
+    debug('outputname', outfilename)
+
+    winbase2 = winbase.replace('\\', '/')
 
     for line in lines:
-        debug('input:',line)
+        debug('input:', line)
 
         # special for CTestCustom.template + ctest bugs w arguments
-        line=re.sub('--builddir=[^ "]*', '', line)
+        line = re.sub('--builddir=[^ "]*', '', line)
 
-        line=line.replace(linosng,winosng)
-        line=line.replace(lintestdeploy,wintestdeploy) # this should fix path of diffpng.  must come before linbuild replacement
-        line=line.replace(linbuild,winbuild)
-        line=line.replace(lintct,wintct)
-        line=line.replace(linpy,winpy)
-        #line=line.replace(linconv,winconv)
-        line=line.replace(linoslib,winoslib)
-        line=line.replace(lintestdata,wintestdata)
-        line=line.replace(linexamples,winexamples)
+        line = line.replace(linosng, winosng)
+        line = line.replace(lintestdeploy, wintestdeploy)  # this should fix path of diffpng.  must come before linbuild replacement
+        line = line.replace(linbuild, winbuild)
+        line = line.replace(lintct, wintct)
+        line = line.replace(linpy, winpy)
+        # line=line.replace(linconv,winconv)
+        line = line.replace(linoslib, winoslib)
+        line = line.replace(lintestdata, wintestdata)
+        line = line.replace(linexamples, winexamples)
 
-        line=line.replace(linbase+'/',winbase2+'/')
+        line = line.replace(linbase + '/', winbase2 + '/')
 
-        line=line.replace('\\"','__ESCAPE_WIN_QUOTE_MECHANISM__')
-        line=line.replace('\\','/')
-        line=line.replace('__ESCAPE_WIN_QUOTE_MECHANISM__','\\"')
+        line = line.replace('\\"', '__ESCAPE_WIN_QUOTE_MECHANISM__')
+        line = line.replace('\\', '/')
+        line = line.replace('__ESCAPE_WIN_QUOTE_MECHANISM__', '\\"')
 
-        debug('output:',line)
+        debug('output:', line)
 
         fout.write(line)
 
@@ -178,17 +191,17 @@ def processfile(infilename, winconv):
     print('processed ' + infilename + ' to ' + outfilename)
     fin.close()
     fout.close()
-    open(infilename,'wb').write(open(outfilename,'rb').read())
+    open(infilename, 'wb').write(open(outfilename, 'rb').read())
     print('new version of ' + infilename + ' written')
 
 
 def process_templates():
-    cmakebase = winbase.replace('\\','/')+'/tests'
+    cmakebase = winbase.replace('\\', '/') + '/tests'
     templatepath = winbase + r'\tests\data\scad\templates'
     # iterate over scad cmake templates
     for filename in os.listdir(templatepath):
         if filename.endswith("-template.scad"):
-            scadname = filename.replace("-template","")
+            scadname = filename.replace("-template", "")
             # search for path of template output
             scadpath = find_single_file(scadname, winbase + r'\tests\data\scad')
             if scadpath is not None:
@@ -203,14 +216,16 @@ def process_templates():
             else:
                 print(scadname + " not found")
 
-def find_single_file(name, path):
+
+def find_single_file(name: str, path: str) -> str:
     for root, dirs, files in os.walk(path):
         if name in files:
             return os.path.join(root, name)
 
-def run():
+
+def run() -> None:
     winconv = find_imagemagick()
-    if winconv=='':
+    if winconv == '':
         print('error, cannot find convert.exe')
 
     if True:
@@ -227,8 +242,8 @@ def run():
         print('winpy ' + winpy)
         print('linosng ' + linosng)
         print('winosng ' + winosng)
-        #print('linconv ' + linconv) # use diffpng, included in archive, as opposed to ImageMagick
-        #print('winconv ' + winconv)
+        # print('linconv ' + linconv) # use diffpng, included in archive, as opposed to ImageMagick
+        # print('winconv ' + winconv)
         print('linoslib ' + linoslib)
         print('winoslib ' + winoslib)
         print('lintestdata ' + lintestdata)
@@ -242,5 +257,5 @@ def run():
     process_templates()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     run()

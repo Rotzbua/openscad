@@ -23,23 +23,21 @@
 #
 
 
-import sys
-import os
-import glob
-import subprocess
-import re
-import getopt
-import shutil
-import platform
-import string
 import difflib
+import getopt
+import os
+import re
+import subprocess
+import sys
 from pathlib import Path
+from typing import Any
 
-#_debug_tcct = True
+# _debug_tcct = True
 _debug_tcct = False
 
 # Path from the build/tests to the tests source dir
 build_to_test_sources = "../../tests"
+
 
 def get_runtime_to_test_sources():
     """Path from the tests install/working dir to the tests source dir.
@@ -49,29 +47,34 @@ def get_runtime_to_test_sources():
     cwd = Path.cwd()
     up_one = os.path.normpath(os.path.join(cwd, ".."))
     parent_dir = os.path.basename(up_one)
-    if (parent_dir != "build"):
+    if parent_dir != "build":
         # only check binary path if NOT within a build tree.
         OPENSCAD_BINARY = os.getenv('OPENSCAD_BINARY')
-        if (OPENSCAD_BINARY is not None):
+        if OPENSCAD_BINARY is not None:
             project_dir = os.path.dirname(OPENSCAD_BINARY)
             test_cmake_dir = os.path.join(project_dir, "CMakeFiles")
             if not os.path.exists(test_cmake_dir):
                 return os.path.relpath(project_dir, cwd) + "/tests"
     return build_to_test_sources
 
-def debug(*args):
+
+def debug(*args) -> None:
     global _debug_tcct
     if _debug_tcct:
         print('test_cmdline_tool:', end=" ")
-        for a in args: print(a, end=" ")
+        for arg in args:
+            print(arg, end=" ")
         print()
 
-def initialize_environment():
-    if not options.generate: options.generate = bool(os.getenv("TEST_GENERATE"))
+
+def initialize_environment() -> bool:
+    if not options.generate:
+        options.generate = bool(os.getenv("TEST_GENERATE"))
     return True
 
-def init_expected_filename():
-    global expecteddir, expectedfilename # fixme - globals are hard to use
+
+def init_expected_filename() -> None:
+    global expecteddir, expectedfilename  # fixme - globals are hard to use
 
     expected_testname = options.testname
 
@@ -84,15 +87,17 @@ def init_expected_filename():
     expectedfilename = os.path.join(expecteddir, options.filename + "-expected." + options.suffix)
     expectedfilename = os.path.normpath(expectedfilename)
 
-def init_actual_filename():
-    global actualdir, actualfilename # fixme - globals are hard to use
+
+def init_actual_filename() -> None:
+    global actualdir, actualfilename  # fixme - globals are hard to use
 
     cmdname = os.path.split(options.cmd)[1]
     actualdir = os.path.join(Path.cwd(), "output", options.testname)
     actualfilename = os.path.join(actualdir, options.filename + "-actual." + options.suffix)
     actualfilename = os.path.normpath(actualfilename)
 
-def verify_test(testname, cmd):
+
+def verify_test(testname, cmd) -> bool:
     global expectedfilename, actualfilename
     if not options.generate:
         if not os.path.isfile(expectedfilename):
@@ -102,6 +107,7 @@ def verify_test(testname, cmd):
             print(' expected image: ' + expectedfilename + '\n', file=sys.stderr)
             return False
     return True
+
 
 def execute_and_redirect(cmd, params, outfile):
     retval = -1
@@ -114,10 +120,13 @@ def execute_and_redirect(cmd, params, outfile):
         print(" cmd:", cmd, file=sys.stderr)
         print(" params:", params, file=sys.stderr)
         print(" outfile:", outfile, file=sys.stderr)
-    if outfile == subprocess.PIPE: return (retval, out)
-    else: return retval
+    if outfile == subprocess.PIPE:
+        return retval, out
+    else:
+        return retval
 
-def normalize_string(s):
+
+def normalize_string(s: str) -> str:
     """Apply all modifications to an output string which would have been
     applied if OPENSCAD_TESTING was defined at build time of the executable.
 
@@ -138,37 +147,38 @@ def normalize_string(s):
         return "%.6g"%value
     s = re.sub('(-?[0-9]+(\\.[0-9]+)?(e[+-][0-9]+)?)', floatrep, s)
     """
+
     def pathrep(match):
         return match.groups()[0] + match.groups()[2]
+
     s = re.sub('(file = ")([^"/]*/)*([^"]*")', pathrep, s)
 
     return s
 
-def get_normalized_text(filename, replace_paths=False):
+
+def get_normalized_text(filename: str, replace_paths: bool = False) -> str:
     try:
         f = open(filename)
         text = f.read()
     except:
-      try:
-        # 'ord-tests.scad' contains some invalid UTF-8 chars.
-        # latin-1 is for "files in an ASCII compatible encoding,
-        # best effort is acceptable".
-        f = open(filename, encoding="latin-1")
-        text = f.read()
-      except:
-        # do not fail silently
-        text = "could not read " + "\n" + filename + "\n" + repr(err)
+        try:
+            # 'ord-tests.scad' contains some invalid UTF-8 chars.
+            # latin-1 is for "files in an ASCII compatible encoding,
+            # best effort is acceptable".
+            f = open(filename, encoding="latin-1")
+            text = f.read()
+        except:
+            # do not fail silently
+            text = "could not read " + "\n" + filename + "\n" + repr(err)
     text = normalize_string(text).strip("\r\n").replace("\r\n", "\n") + "\n"
     if replace_paths:
         runtime_to_test_sources = get_runtime_to_test_sources()
         if runtime_to_test_sources != build_to_test_sources:
             return text.replace(build_to_test_sources, runtime_to_test_sources)
-        else:
-            return text
-    else:
-        return text
+    return text
 
-def compare_default(resultfilename):
+
+def compare_default(resultfilename: str) -> bool:
     print('text comparison: ', file=sys.stderr)
     print(' expected textfile: ', expectedfilename, file=sys.stderr)
     print(' actual textfile: ', resultfilename, file=sys.stderr)
@@ -180,40 +190,43 @@ def compare_default(resultfilename):
                 [line for line in expected_text.splitlines()],
                 [line for line in actual_text.splitlines()])
             line = None
-            for line in differences: sys.stderr.write(line + '\n')
-            if not line: return True
+            for line in differences:
+                sys.stderr.write(line + '\n')
+            if not line:
+                return True
         return False
     return True
 
-def compare_png(resultfilename):
+
+def compare_png(resultfilename: str) -> bool:
     if options.comparator == 'image_compare':
-      compare_method = 'image_compare'
-      args = [os.path.join(get_runtime_to_test_sources(), 'image_compare.py'),
-              expectedfilename, resultfilename]
+        compare_method = 'image_compare'
+        args = [os.path.join(get_runtime_to_test_sources(), 'image_compare.py'),
+                expectedfilename, resultfilename]
 
     # for systems with older imagemagick that doesn't support '-morphology'
     # http://www.imagemagick.org/Usage/morphology/#alturnative
     elif options.comparator == 'old':
-      args = [expectedfilename, resultfilename, "-alpha", "Off", "-compose", "difference", "-composite", "-threshold", "8%", "-gaussian-blur","3x65535", "-threshold", "99.99%", "-format", "%[fx:w*h*mean]", "info:"]
+        args = [expectedfilename, resultfilename, "-alpha", "Off", "-compose", "difference", "-composite", "-threshold", "8%", "-gaussian-blur", "3x65535", "-threshold", "99.99%", "-format", "%[fx:w*h*mean]", "info:"]
 
     elif options.comparator == 'ncc':
-      # for systems where imagemagick crashes when using the above comparators
-      args = [expectedfilename, resultfilename, "-alpha", "Off", "-compose", "difference", "-metric", "NCC", "tmp.png"]
-      options.comparison_exec = 'compare'
-      compare_method = 'NCC'
+        # for systems where imagemagick crashes when using the above comparators
+        args = [expectedfilename, resultfilename, "-alpha", "Off", "-compose", "difference", "-metric", "NCC", "tmp.png"]
+        options.comparison_exec = 'compare'
+        compare_method = 'NCC'
 
     elif options.comparator == 'diffpng':
-      # alternative to imagemagick based on Yee's algorithm
+        # alternative to imagemagick based on Yee's algorithm
 
-      # Writing the 'difference image' with --output is very useful for debugging but takes a long time
-      # args = [expectedfilename, resultfilename, "--output", resultfilename+'.diff.png']
+        # Writing the 'difference image' with --output is very useful for debugging but takes a long time
+        # args = [expectedfilename, resultfilename, "--output", resultfilename+'.diff.png']
 
-      args = [expectedfilename, resultfilename]
-      compare_method = 'diffpng'
+        args = [expectedfilename, resultfilename]
+        compare_method = 'diffpng'
 
     else:
-      compare_method = 'pixel'
-      args = [expectedfilename, resultfilename, "-alpha", "On", "-compose", "difference", "-composite", "-threshold", "8%", "-morphology", "Erode", options.kernel, "-format", "%[fx:w*h*mean]", "info:"]
+        compare_method = 'pixel'
+        args = [expectedfilename, resultfilename, "-alpha", "On", "-compose", "difference", "-composite", "-threshold", "8%", "-morphology", "Erode", options.kernel, "-format", "%[fx:w*h*mean]", "info:"]
 
     print('Image comparison cmdline: ' + options.comparison_exec + ' ' + ' '.join(args), file=sys.stderr)
 
@@ -228,34 +241,44 @@ def compare_png(resultfilename):
     (retval, output) = execute_and_redirect(options.comparison_exec, args, subprocess.PIPE)
     print("Image comparison return:", retval, "output:", output)
     if retval == 0:
-        if compare_method=='pixel':
+        if compare_method == 'pixel':
             pixelerr = int(float(output.strip()))
-            if pixelerr < 32: return True
-            else: print(pixelerr, ' pixel errors', file=sys.stderr)
-        elif compare_method=='NCC':
+            if pixelerr < 32:
+                return True
+            else:
+                print(pixelerr, ' pixel errors', file=sys.stderr)
+        elif compare_method == 'NCC':
             thresh = 0.95
             ncc_err = float(output.strip())
-            if ncc_err > thresh or ncc_err==0.0: return True
-            else: print(ncc_err, ' Images differ: NCC comparison < ', thresh, file=sys.stderr)
-        elif compare_method=='diffpng':
-            if 'MATCHES:' in output: return True
-            if 'DIFFERS:' in output: return False
-        elif compare_method=='image_compare':
+            if ncc_err > thresh or ncc_err == 0.0:
+                return True
+            else:
+                print(ncc_err, ' Images differ: NCC comparison < ', thresh, file=sys.stderr)
+        elif compare_method == 'diffpng':
+            if 'MATCHES:' in output:
+                return True
+            if 'DIFFERS:' in output:
+                return False
+        elif compare_method == 'image_compare':
             return True
     return False
 
-def compare_with_expected(resultfilename):
+
+def compare_with_expected(resultfilename: str) -> bool:
     if not options.generate:
-        if "compare_" + options.suffix in globals(): return globals()["compare_" + options.suffix](resultfilename)
-        else: return compare_default(resultfilename)
+        if "compare_" + options.suffix in globals():
+            return globals()["compare_" + options.suffix](resultfilename)
+        else:
+            return compare_default(resultfilename)
     return True
+
 
 #
 #  Extract the content of a 3MF file (which is a ZIP file having one main XML file
 #  and some additional meta data files) and replace the original file with just
 #  the XML content for easier comparison by the test framework.
 #
-def post_process_3mf(filename):
+def post_process_3mf(filename: str) -> None:
     print('post processing 3MF file (extracting XML data from ZIP): ', filename)
     from zipfile import ZipFile
     xml_content = ZipFile(filename).read("3D/3dmodel.model")
@@ -268,7 +291,8 @@ def post_process_3mf(filename):
     with open(filename, 'wb') as xml_file:
         xml_file.write(xml_content.encode('utf-8'))
 
-def run_test(testname, cmd, args, redirect_stdin=False, redirect_stdout=False):
+
+def run_test(testname: str, cmd, args, redirect_stdin: bool = False, redirect_stdout: bool = False) -> None:
     cmdname = os.path.split(options.cmd)[1]
 
     if options.generate:
@@ -276,7 +300,7 @@ def run_test(testname, cmd, args, redirect_stdin=False, redirect_stdout=False):
             try:
                 os.makedirs(expecteddir)
             except OSError as e:
-                if e.errno != 17: raise e # catch File Exists to allow parallel runs
+                if e.errno != 17: raise e  # catch File Exists to allow parallel runs
         outputname = expectedfilename
     else:
         if not os.path.exists(actualdir):
@@ -301,8 +325,8 @@ def run_test(testname, cmd, args, redirect_stdin=False, redirect_stdout=False):
 
     try:
         is_openscad = os.path.split(cmd)[1].lower().startswith("openscad")
-        if(is_openscad):
-            outargs = ['-o', '-'] if (redirect_stdout) else ['-o', outputname]
+        if is_openscad:
+            outargs = ['-o', '-'] if redirect_stdout else ['-o', outputname]
         else:
             outargs = [outputname]
         cmdline = [cmd] + args + outargs
@@ -329,19 +353,23 @@ def run_test(testname, cmd, args, redirect_stdin=False, redirect_stdout=False):
             return None
 
         return outputname
-    except (OSError) as err:
-        print(f'Error: {err.strerror} "{cmd}"', file=sys.stderr)
+    except OSError as error:
+        print(f'Error: {error.strerror} "{cmd}"', file=sys.stderr)
         return None
 
+
 class Options:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__dict__['options'] = {}
-    def __setattr__(self, name, value):
+
+    def __setattr__(self, name: str, value: Any) -> None:
         self.options[name] = value
-    def __getattr__(self, name):
+
+    def __getattr__(self, name: str) -> Any:
         return self.options[name]
 
-def usage():
+
+def usage() -> None:
     print("Usage: " + sys.argv[0] + " [<options>] <cmdline-tool> <argument>", file=sys.stderr)
     print("Options:", file=sys.stderr)
     print("  -g, --generate           Generate expected output for the given tests", file=sys.stderr)
@@ -354,13 +382,14 @@ def usage():
     print("      --stdin              Pipe input file to <cmdline-tool> by stdin, replacing input file name with '-' when calling <cmdline-tool>", file=sys.stderr)
     print("      --stdout             Pipe output of <cmdline-tool> to output file, replacing output file name with '-' when calling <cmdline-tool>", file=sys.stderr)
 
+
 if __name__ == '__main__':
     # Handle command-line arguments
     try:
-        debug('args:'+str(sys.argv))
+        debug('args:' + str(sys.argv))
         opts, args = getopt.getopt(sys.argv[1:], "gs:k:e:c:t:f:m", ["generate", "convexec=", "suffix=", "kernel=", "expected_dir=", "test=", "file=", "comparator=", "stdin", "stdout"])
-        debug('getopt args:'+str(sys.argv))
-    except (getopt.GetoptError) as err:
+        debug('getopt args:' + str(sys.argv))
+    except getopt.GetoptError as err:
         usage()
         sys.exit(2)
 
@@ -375,10 +404,13 @@ if __name__ == '__main__':
     options.stdout = False
 
     for o, a in opts:
-        if o in ("-g", "--generate"): options.generate = True
+        if o in ("-g", "--generate"):
+            options.generate = True
         elif o in ("-s", "--suffix"):
-            if a[0] == '.': options.suffix = a[1:]
-            else: options.suffix = a
+            if a[0] == '.':
+                options.suffix = a[1:]
+            else:
+                options.suffix = a
         elif o in ("-k", "--kernel"):
             options.kernel = a
         elif o in ("-e", "--expected-dir"):
@@ -388,12 +420,12 @@ if __name__ == '__main__':
         elif o in ("-f", "--file"):
             options.filename = a
         elif o in ("-c", "--compare-exec"):
-            options.comparison_exec = os.path.normpath( a )
+            options.comparison_exec = os.path.normpath(a)
         elif o in ("-m", "--comparator"):
             options.comparator = a
-        elif o == "--stdin" :
+        elif o == "--stdin":
             options.stdin = True
-        elif o == "--stdout" :
+        elif o == "--stdout":
             options.stdout = True
 
     # <cmdline-tool> and <argument>
@@ -421,7 +453,8 @@ if __name__ == '__main__':
         options.testname = os.path.split(args[0])[1]
 
     # Initialize and verify run-time environment
-    if not initialize_environment(): sys.exit(1)
+    if not initialize_environment():
+        sys.exit(1)
 
     init_expected_filename()
     init_actual_filename()
@@ -430,6 +463,9 @@ if __name__ == '__main__':
     verification = verify_test(options.testname, options.cmd)
 
     resultfile = run_test(options.testname, options.cmd, args[1:], options.stdin, options.stdout)
-    if not resultfile: exit(1)
-    if options.suffix == "3mf": post_process_3mf(resultfile)
-    if not verification or not compare_with_expected(resultfile): exit(1)
+    if not resultfile:
+        exit(1)
+    if options.suffix == "3mf":
+        post_process_3mf(resultfile)
+    if not verification or not compare_with_expected(resultfile):
+        exit(1)

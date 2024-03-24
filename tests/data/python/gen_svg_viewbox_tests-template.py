@@ -1,23 +1,22 @@
 #! ${PYTHON_EXECUTABLE}
 
-
 import sys
 
 params = [
-	[ 300, 400, "none" ],
-	[ 600, 200, "none" ],
-	[ 300, 400, "xMinYMin", "meet" ],
-	[ 300, 400, "xMidYMin", "meet" ],
-	[ 300, 400, "xMaxYMin", "meet" ],
-	[ 600, 200, "xMinYMin", "meet" ],
-	[ 600, 200, "xMinYMid", "meet" ],
-	[ 600, 200, "xMinYMax", "meet" ],
-	[ 600, 200, "xMinYMin", "slice" ],
-	[ 600, 200, "xMidYMin", "slice" ],
-	[ 600, 200, "xMaxYMin", "slice" ],
-	[ 600, 600, "xMinYMin", "slice" ],
-	[ 600, 600, "xMinYMid", "slice" ],
-	[ 600, 600, "xMinYMax", "slice" ]
+    [300, 400, "none"],
+    [600, 200, "none"],
+    [300, 400, "xMinYMin", "meet"],
+    [300, 400, "xMidYMin", "meet"],
+    [300, 400, "xMaxYMin", "meet"],
+    [600, 200, "xMinYMin", "meet"],
+    [600, 200, "xMinYMid", "meet"],
+    [600, 200, "xMinYMax", "meet"],
+    [600, 200, "xMinYMin", "slice"],
+    [600, 200, "xMidYMin", "slice"],
+    [600, 200, "xMaxYMin", "slice"],
+    [600, 600, "xMinYMin", "slice"],
+    [600, 600, "xMinYMid", "slice"],
+    [600, 600, "xMinYMax", "slice"],
 ]
 
 with open(sys.argv[1] + "/viewbox-tests.svg.in") as f:
