@@ -2,13 +2,14 @@ import os
 import shutil
 import socket
 import urllib.request
+from pathlib import Path
 
 url = 'https://files.openscad.org/documentation/'
 url_zip = 'https://files.openscad.org/documentation/manual.zip'
 url_pdf = ['https://files.openscad.org/documentation/manual/OpenSCAD_User_Manual.pdf', 'https://files.openscad.org/documentation/manual/The_OpenSCAD_Language.pdf']
 
-docs_dir = os.path.join(os.getcwd(), 'openscad_docs')
-pdfs_dir = os.path.join(os.getcwd(), 'openscad_docs_pdf')
+docs_dir: Path = Path.cwd() / 'openscad_docs'
+pdfs_dir: Path = Path.cwd() / 'openscad_docs_pdf'
 
 dns_server = "one.one.one.one"
 
@@ -32,13 +33,13 @@ def is_connected(hostname) -> bool:
 # https://files.openscad.org/documentation/
 # if is_connected() returns True
 if is_connected(dns_server):
-    if not os.path.exists(pdfs_dir):
-        os.makedirs(pdfs_dir)
+    if not pdfs_dir.exists():
+        pdfs_dir.mkdir(parents=True)
     print(f'Downloading : {url_zip}')
     file_name = url_zip.split('/')[-1]
     urllib.request.urlretrieve(url_zip, file_name)
     shutil.unpack_archive(file_name, docs_dir, 'zip')
-    os.remove(file_name)
+    Path(file_name).unlink()
 
     for pdf in url_pdf:
         print(f'Downloading : {pdf}')

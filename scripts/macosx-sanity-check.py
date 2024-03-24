@@ -24,6 +24,7 @@ import sys
 import os
 import subprocess
 import re
+from pathlib import Path
 
 DEBUG = False
 
@@ -41,7 +42,7 @@ def lookup_library(file):
     found = None
     if re.search("@rpath", file):
         file = re.sub("^@rpath", lc_rpath, file)
-        if os.path.exists(file): found = file
+        if Path(file).exists(): found = file
         if DEBUG: print("@rpath resolved: " + str(file))
     if not found:
         if re.search(r"\.app/", file):
@@ -49,7 +50,7 @@ def lookup_library(file):
             if DEBUG: print("App found: " + str(found))
         elif re.search("@executable_path", file):
             abs = re.sub("^@executable_path", executable_path, file)
-            if os.path.exists(abs): found = abs
+            if Path(abs).exists(): found = abs
             if DEBUG: print("Lib in @executable_path found: " + str(found))
         elif re.search(r"\.framework/", file):
             found = os.path.join("/Library/Frameworks", file)
@@ -57,7 +58,7 @@ def lookup_library(file):
         else:
             for path in os.getenv("DYLD_LIBRARY_PATH", "").split(':'):
                 abs = os.path.join(path, file)
-                if os.path.exists(abs): found = abs
+                if Path(abs).exists(): found = abs
                 if DEBUG: print("Library found: " + str(found))
     return found
 

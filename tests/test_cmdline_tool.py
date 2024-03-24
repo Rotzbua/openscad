@@ -33,6 +33,7 @@ import shutil
 import platform
 import string
 import difflib
+from pathlib import Path
 
 #_debug_tcct = True
 _debug_tcct = False
@@ -45,7 +46,7 @@ def get_runtime_to_test_sources():
        Tests are usually run from the build dir so no issue, however with mingw cross builds,
        the tests are installed to openscad/tests-build which is only one directory deeper than the top level.
        Expected outputs that reference use/include files will need their relative paths adjusted."""
-    cwd = os.getcwd()
+    cwd = Path.cwd()
     up_one = os.path.normpath(os.path.join(cwd, ".."))
     parent_dir = os.path.basename(up_one)
     if (parent_dir != "build"):
@@ -54,7 +55,7 @@ def get_runtime_to_test_sources():
         if (OPENSCAD_BINARY is not None):
             project_dir = os.path.dirname(OPENSCAD_BINARY)
             test_cmake_dir = os.path.join(project_dir, "CMakeFiles")
-            if (not os.path.exists(test_cmake_dir)):
+            if not os.path.exists(test_cmake_dir):
                 return os.path.relpath(project_dir, cwd) + "/tests"
     return build_to_test_sources
 
@@ -87,7 +88,7 @@ def init_actual_filename():
     global actualdir, actualfilename # fixme - globals are hard to use
 
     cmdname = os.path.split(options.cmd)[1]
-    actualdir = os.path.join(os.getcwd(), "output", options.testname)
+    actualdir = os.path.join(Path.cwd(), "output", options.testname)
     actualfilename = os.path.join(actualdir, options.filename + "-actual." + options.suffix)
     actualfilename = os.path.normpath(actualfilename)
 

@@ -27,6 +27,8 @@
 
 
 import sys, os, re, subprocess, argparse
+from pathlib import Path
+
 from validatestl import validateSTL
 
 def failquit(*args):
@@ -40,7 +42,8 @@ def createImport(inputfile, scadfile):
         print ('createImport: ' + inputfile + " " + scadfile, file=sys.stderr)
         outputdir = os.path.dirname(scadfile)
         try:
-            if outputdir and not os.path.exists(outputdir): os.mkdir(outputdir)
+            if outputdir and not Path(outputdir).exists():
+                Path(outputdir).mkdir()
             f = open(scadfile,'w')
             f.write('import("'+inputfilename+'");'+os.linesep)
             f.close()

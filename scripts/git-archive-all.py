@@ -4,6 +4,7 @@ __version__ = "1.7"
 
 import sys
 from os import path, extsep
+from pathlib import Path
 from subprocess import Popen, PIPE, CalledProcessError
 
 
@@ -433,7 +434,7 @@ if __name__ == '__main__':
 
     output_file_path = args[0]
 
-    if path.isdir(output_file_path):
+    if Path(output_file_path).is_dir():
         parser.error("You cannot use directory as output")
 
     # avoid tarbomb

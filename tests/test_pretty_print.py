@@ -29,6 +29,7 @@
 
 
 import string, sys, re, os, hashlib, subprocess, time, platform, html, base64
+from pathlib import Path
 
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -442,7 +443,7 @@ def debug(x):
         print('test_pretty_print debug: ' + x)
     debugfile.write((x + '\n').encode('utf-8'))
 
-builddir = os.getcwd()
+builddir = Path.cwd()
 include_passed = False
 
 def main():
@@ -470,7 +471,7 @@ def main():
     suffix = ezsearch(r'--suffix=(.*?) ', ' '.join(sys.argv) + ' ')
     builddir = ezsearch(r'--builddir=(.*?) ', ' '.join(sys.argv) + ' ')
     if not builddir or not os.path.exists(builddir):
-        builddir = os.getcwd()
+        builddir = Path.cwd()
         print('warning: could not find --builddir, trying to use current dir:', builddir)
     debug('build dir set to ' +  builddir)
 
@@ -502,7 +503,7 @@ def main():
     html_filename = os.path.join(builddir, 'Testing', 'Temporary', html_basename)
     debug('saving ' + html_filename + ' ' + str(len(html)) + ' bytes')
     trysave(html_filename, html)
-    print("report saved:\n", html_filename.replace(os.getcwd()+os.path.sep,''))
+    print("report saved:\n", html_filename.replace(Path.cwd()+os.path.sep,''))
 
     failed_tests = [test for test in tests if not test.passed]
     if upload and failed_tests:

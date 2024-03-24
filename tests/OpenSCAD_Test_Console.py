@@ -7,6 +7,7 @@
 
 import os,sys
 import shutil
+from pathlib import Path
 
 thisfile_abspath=os.path.abspath(__file__)
 thisdir_abspath=os.path.abspath(os.path.dirname(thisfile_abspath))
@@ -30,7 +31,7 @@ else:
 	print('searching for ctest.exe')
 	ctestpath=''
 	for basedir in 'C:/Program Files','C:/Program Files (x86)':
-		if os.path.isdir(basedir):
+		if Path(basedir).is_dir():
 			pflist = os.listdir(basedir)
 			for subdir in pflist:
 				if 'cmake' in subdir.lower():
@@ -39,7 +40,7 @@ else:
 						if 'ctest.exe' in files:
 							ctestpath=os.path.join(root,'ctest.exe')
 
-	if not os.path.isfile(ctestpath):
+	if not Path(ctestpath).is_file():
 		print('error, cant find ctest.exe')
 	else:
 		ctestdir = os.pathsep + os.path.dirname(ctestpath)
