@@ -110,7 +110,7 @@ class Mesh():
 
 
 def validateSTL(filename):
-    mesh = read_stl(filename);
+    mesh = read_stl(filename)
 
     if mesh is None:
         print("Loading error")
