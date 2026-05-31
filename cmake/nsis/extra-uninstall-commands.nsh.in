@@ -1,2 +1,15 @@
+!define ARP_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@"
+
+; Keep uninstall side effects in the same scope that was selected at install time.
+ReadRegStr $0 HKCU "${ARP_UNINSTALL}" "InstallScope"
+StrCmp "$0" "CurrentUser" 0 OpenSCAD_CheckMachineScope
+  SetShellVarContext current
+  Goto OpenSCAD_ScopeReady
+OpenSCAD_CheckMachineScope:
+ReadRegStr $0 HKLM "${ARP_UNINSTALL}" "InstallScope"
+StrCmp "$0" "AllUsers" 0 OpenSCAD_ScopeReady
+  SetShellVarContext all
+OpenSCAD_ScopeReady:
+
 ${UnRegisterExtension} ".scad" "OpenSCAD_File"
 ${RefreshShellIcons}
