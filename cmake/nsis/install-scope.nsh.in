@@ -25,10 +25,12 @@ FunctionEnd
 Function OpenSCAD_InstallScopePageCreate
   ClearErrors
   UserInfo::GetAccountType
-  IfErrors OpenSCAD_InstallScopeNoAdminChoice
+  IfErrors 0 +3
+    DetailPrint "Could not detect account type, defaulting to current-user install scope."
+    Goto OpenSCAD_InstallScopeNoAdminChoice
   Pop $OpenSCADInstallScopeAccountType
 
-  ; Keep the existing default for admin installs, but prefer a writable
+  ; Keep the existing default for admin installs, but use a user-writable
   ; LocalAppData target for per-user installs.
   StrCmp "$SV_ALLUSERS" "AllUsers" 0 +3
     Call OpenSCAD_SetAllUsersInstallScope
@@ -36,7 +38,6 @@ Function OpenSCAD_InstallScopePageCreate
   Call OpenSCAD_SetCurrentUserInstallScope
 
   StrCmp "$OpenSCADInstallScopeAccountType" "Admin" OpenSCAD_InstallScopeCreateDialog
-  StrCmp "$OpenSCADInstallScopeAccountType" "Power" OpenSCAD_InstallScopeCreateDialog
 
 OpenSCAD_InstallScopeNoAdminChoice:
   ; Non-admin users can only install for the current user.
