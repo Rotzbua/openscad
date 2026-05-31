@@ -1,2 +1,3 @@
+SetRegView 64
 ${UnRegisterExtension} ".scad" "OpenSCAD_File"
 ${RefreshShellIcons}
