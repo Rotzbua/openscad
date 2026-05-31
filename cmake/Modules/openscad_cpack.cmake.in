@@ -11,15 +11,13 @@ if(CPACK_GENERATOR MATCHES "NSIS")
   set(CPACK_NSIS_HELP_LINK "https://openscad.org/community.html")
   set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
   set(CPACK_NSIS_DEFINES "\
-    !undef MUI_INCLUDED\n\
     !include \\\"MUI2.nsh\\\"\n\
     !include \\\"MultiUser.nsh\\\"\n\
     !include \\\"x64.nsh\\\"\n\
     !include \\\"WinVer.nsh\\\"\n\
     !define MULTIUSER_EXECUTIONLEVEL Highest\n\
     !define MULTIUSER_MUI\n\
-    !define MULTIUSER_INSTALLMODE_COMMANDLINE\n\
-    RequestExecutionLevel highest\
+    !define MULTIUSER_INSTALLMODE_COMMANDLINE\
   ")
   set(CPACK_INSTALL_CMAKE_PROJECTS "@CMAKE_BINARY_DIR@;@CMAKE_PROJECT_NAME@;@CMAKE_INSTALL_DEFAULT_COMPONENT_NAME@;/")
   set(CPACK_NSIS_COMPONENT_INSTALL 0)
