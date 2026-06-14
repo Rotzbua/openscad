@@ -1728,7 +1728,16 @@ if(MXECROSS)
   endif()
   set(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS "\
     !include \\\"FileFunc.nsh\\\"\n\
-    !include \\\"${CMAKE_SOURCE_DIR}/cmake/nsis/mingw-file-association.nsh\\\"\
+    !include \\\"${CMAKE_SOURCE_DIR}/cmake/nsis/mingw-file-association.nsh\\\"\n\
+    ${IfNot} ${RunningX64}\n\
+      MessageBox MB_ICONSTOP|MB_OK \\\"This installer supports 64-bit Windows only.\\\"\n\
+      Abort\n\
+    ${EndIf}\n\
+    ${IfNot} ${AtLeastWin10}\n\
+      MessageBox MB_ICONSTOP|MB_OK \\\"Windows 10 or newer is required.\\\"\n\
+      Abort\n\
+    ${EndIf}\n\
+    SetRegView 64\
   ")
   set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "\
     !include \\\"${CMAKE_BINARY_DIR}/nsis-extra-install-commands.nsh\\\"\
