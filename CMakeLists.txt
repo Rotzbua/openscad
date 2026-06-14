@@ -1726,6 +1726,11 @@ if(MXECROSS)
   else()
     message(FATAL_ERROR "CPACK_NSIS_IGNORE_LICENSE_PAGE requires cmake 3.22")
   endif()
+  set(CPACK_NSIS_DEFINES "\
+    RequestExecutionLevel highest\n\
+    !include \\\"${CMAKE_BINARY_DIR}/nsis-install-scope.nsh\\\"\n\
+    Page custom OpenSCAD_InstallScopePageCreate OpenSCAD_InstallScopePageLeave\
+  ")
   set(CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS "\
     !include \\\"FileFunc.nsh\\\"\n\
     !include \\\"${CMAKE_SOURCE_DIR}/cmake/nsis/mingw-file-association.nsh\\\"\
@@ -1745,6 +1750,8 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsis/extra-install-commands.ns
                "${CMAKE_BINARY_DIR}/nsis-extra-install-commands.nsh" @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsis/extra-uninstall-commands.nsh.in"
                "${CMAKE_BINARY_DIR}/nsis-extra-uninstall-commands.nsh" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsis/install-scope.nsh.in"
+               "${CMAKE_BINARY_DIR}/nsis-install-scope.nsh" @ONLY)
 # CPACK_PROJECT_CONFIG_FILE is for configuring CPack-generator specific settings
 set(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/openscad_cpack.cmake")
 set(CPACK_THREADS 0)
