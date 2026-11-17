@@ -1,2 +1,22 @@
+!ifdef ARP
+!undef ARP
+!endif
+!define ARP "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@"
+
+; Keep uninstall side effects in the same scope that was selected at install time.
+; Default to current-user scope to avoid touching machine-wide associations by accident.
+SetShellVarContext current
+ReadRegStr $0 HKCU "${ARP}" "InstallScope"
+StrCmp "$0" "CurrentUser" OpenSCAD_ScopeReady
+StrCmp "$0" "AllUsers" OpenSCAD_SetMachineScope
+StrCmp "$0" "" OpenSCAD_CheckMachineScope OpenSCAD_ScopeReady
+OpenSCAD_CheckMachineScope:
+ReadRegStr $0 HKLM "${ARP}" "InstallScope"
+StrCmp "$0" "AllUsers" OpenSCAD_SetMachineScope OpenSCAD_ScopeReady
+OpenSCAD_SetMachineScope:
+  SetShellVarContext all
+  Goto OpenSCAD_ScopeReady
+OpenSCAD_ScopeReady:
+
 ${UnRegisterExtension} ".scad" "OpenSCAD_File"
 ${RefreshShellIcons}

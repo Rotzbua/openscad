@@ -1,0 +1,83 @@
+!ifndef OpenSCADInstallScope_INCLUDED
+!define OpenSCADInstallScope_INCLUDED
+
+!include "LogicLib.nsh"
+!include "nsDialogs.nsh"
+!include "WinMessages.nsh"
+
+Var OpenSCADInstallScopeDialog
+Var OpenSCADInstallScopeAllUsersRadio
+Var OpenSCADInstallScopeCurrentUserRadio
+Var OpenSCADInstallScopeAccountType
+
+Function OpenSCAD_SetCurrentUserInstallScope
+  StrCpy $SV_ALLUSERS "JustMe"
+  SetShellVarContext current
+  StrCpy $INSTDIR "$LocalAppData\Programs\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+FunctionEnd
+
+Function OpenSCAD_SetAllUsersInstallScope
+  StrCpy $SV_ALLUSERS "AllUsers"
+  SetShellVarContext all
+  StrCpy $INSTDIR "$PROGRAMFILES\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
+FunctionEnd
+
+Function OpenSCAD_InstallScopePageCreate
+  ClearErrors
+  UserInfo::GetAccountType
+  IfErrors 0 +3
+    DetailPrint "Could not detect account type, defaulting to current-user install scope."
+    Goto OpenSCAD_InstallScopeNoAdminChoice
+  Pop $OpenSCADInstallScopeAccountType
+
+  ; Keep the existing default for admin installs, but use a user-writable
+  ; LocalAppData target for per-user installs.
+  StrCmp "$SV_ALLUSERS" "AllUsers" 0 +3
+    Call OpenSCAD_SetAllUsersInstallScope
+    Goto OpenSCAD_InstallScopeCreateDialog
+  Call OpenSCAD_SetCurrentUserInstallScope
+
+  StrCmp "$OpenSCADInstallScopeAccountType" "Admin" OpenSCAD_InstallScopeCreateDialog
+
+OpenSCAD_InstallScopeNoAdminChoice:
+  ; Non-admin users can only install for the current user.
+  Call OpenSCAD_SetCurrentUserInstallScope
+  Abort
+
+OpenSCAD_InstallScopeCreateDialog:
+  nsDialogs::Create 1018
+  Pop $OpenSCADInstallScopeDialog
+  ${If} $OpenSCADInstallScopeDialog == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0 0u 100% 28u "Choose whether to install OpenSCAD for the current user or for all users."
+  Pop $0
+
+  ${NSD_CreateRadioButton} 0 36u 100% 10u "&Install for all users (requires admin rights)"
+  Pop $OpenSCADInstallScopeAllUsersRadio
+  ${NSD_CreateRadioButton} 0 50u 100% 10u "Install for &current user only"
+  Pop $OpenSCADInstallScopeCurrentUserRadio
+
+  StrCmp "$SV_ALLUSERS" "AllUsers" 0 +3
+    SendMessage $OpenSCADInstallScopeAllUsersRadio ${BM_SETCHECK} ${BST_CHECKED} 0
+    Goto OpenSCAD_InstallScopeShowDialog
+  SendMessage $OpenSCADInstallScopeCurrentUserRadio ${BM_SETCHECK} ${BST_CHECKED} 0
+
+OpenSCAD_InstallScopeShowDialog:
+  nsDialogs::Show
+FunctionEnd
+
+Function OpenSCAD_InstallScopePageLeave
+  ${NSD_GetState} $OpenSCADInstallScopeAllUsersRadio $0
+  StrCmp "$0" "${BST_CHECKED}" 0 OpenSCAD_SetCurrentUserOnLeave
+    Call OpenSCAD_SetAllUsersInstallScope
+    Goto OpenSCAD_InstallScopeLeaveDone
+
+OpenSCAD_SetCurrentUserOnLeave:
+  Call OpenSCAD_SetCurrentUserInstallScope
+
+OpenSCAD_InstallScopeLeaveDone:
+FunctionEnd
+
+!endif

@@ -1,8 +1,18 @@
+!ifdef ARP
+!undef ARP
+!endif
 !define ARP "Software\Microsoft\Windows\CurrentVersion\Uninstall\@CPACK_PACKAGE_INSTALL_REGISTRY_KEY@"
 
 ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
 IntFmt $0 "0x%08X" $0
-WriteRegDWORD HKLM "${ARP}" "EstimatedSize" "$0"
+StrCmp "$SV_ALLUSERS" "AllUsers" 0 OpenSCAD_UserEstimatedSize
+  WriteRegDWORD HKLM "${ARP}" "EstimatedSize" "$0"
+  WriteRegStr HKLM "${ARP}" "InstallScope" "AllUsers"
+  Goto OpenSCAD_WriteEstimatedSizeDone
+OpenSCAD_UserEstimatedSize:
+  WriteRegDWORD HKCU "${ARP}" "EstimatedSize" "$0"
+  WriteRegStr HKCU "${ARP}" "InstallScope" "CurrentUser"
+OpenSCAD_WriteEstimatedSizeDone:
 
 ${RegisterExtension} "$INSTDIR\openscad.exe" ".scad" "OpenSCAD_File"
 ${RefreshShellIcons}
